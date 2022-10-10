@@ -55,7 +55,13 @@ public class SwiftSignalrFlutterPlugin: NSObject, FlutterPlugin, FLTSignalRHostA
     if let hubMethods = options.hubMethods, !hubMethods.isEmpty {
       hubMethods.forEach { (methodName) in
         hub.on(methodName) { (args) in
-          SwiftSignalrFlutterPlugin.signalrApi?.onNewMessageHubName(methodName, message: args?[0] as? String, completion: { error in })
+          if let items = args, items.count > 0 {
+            if let message = items[0] as? String {
+              SwiftSignalrFlutterPlugin.signalrApi?.onNewMessageHubName(methodName, message: args?[0] as? String, completion: { error in })
+            } else if let message = items[0] as? [String: Any], let jsonData = try? JSONSerialization.data(withJSONObject: message, options: .prettyPrinted), let json = String(data: jsonData, encoding: .utf8) {
+              SwiftSignalrFlutterPlugin.signalrApi?.onNewMessageHubName(methodName, message: json, completion: { error in })
+            }
+          }
         }
       }
     }
